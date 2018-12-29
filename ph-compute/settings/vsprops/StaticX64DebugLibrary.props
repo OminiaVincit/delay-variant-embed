@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <_PropertySheetDisplayName>Topo: Proxy-StaticX64DebugLibrary.props</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="base\Common.props" />
+    <Import Project="base\Static.props" />
+    <Import Project="base\X64.props" />
+    <Import Project="base\Debug.props" />
+    <Import Project="base\Library.props" />
+    <Import Project="comp\StaticDebug.props" />
+    <Import Project="comp\StaticLibrary.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <Lib>
+      <TargetMachine>MachineX64</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
+</Project>

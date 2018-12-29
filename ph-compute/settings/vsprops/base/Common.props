@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <_PropertySheetDisplayName>TopoDev: Common</_PropertySheetDisplayName>
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$([System.IO.Path]::GetFullPath('$(SolutionDir)\..\settings\common_include'));$([System.IO.Path]::GetFullPath('$(SolutionDir)\..\externals\PreBuilt'));%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NOMINMAX;_BIND_TO_CURRENT_VCLIBS_VERSION=1;_SECURE_SCL=0;BOOST_OPTIONAL_USE_OLD_DEFINITION_OF_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <MultiProcessorCompilation Condition="'$(Number_Of_Processors)' &gt; 1">true</MultiProcessorCompilation>
+      <ProcessorNumber>$([MSBuild]::Divide($(Number_Of_Processors), 4))</ProcessorNumber>
+      <AdditionalOptions>/we4002 /we4003 /we4554 -d2SSAOptimizer- %(AdditionalOptions)</AdditionalOptions>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <CallingConvention>Cdecl</CallingConvention>
+      <BrowseInformation>
+      </BrowseInformation>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$([System.IO.Path]::GetFullPath('$(SolutionDir)\..\externals\bin\$(Platform)\$(Configuration)\'));%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ProgramDatabaseFile>$(TargetDir)\$(TargetName).pdb</ProgramDatabaseFile>
+      <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$([System.IO.Path]::GetFullPath('$(SolutionDir)\..\externals\bin\$(Platform)\$(ConfigurationName)'));%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+</Project>

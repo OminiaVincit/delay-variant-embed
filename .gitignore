@@ -1,0 +1,14 @@
+*opendb
+*.pdb
+*.obj
+*.ipch
+*.tlog
+*.log
+*.cache
+*.pch
+*.tmp
+ph-compute/DelayVariantTopo/.vs/TopologyAnalysis/v14/.suo
+*.exp
+*.res
+*.svn-base
+*.map
