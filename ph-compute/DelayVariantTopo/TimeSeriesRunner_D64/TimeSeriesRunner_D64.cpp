@@ -33,6 +33,7 @@ public:
         std::ifstream read_op;
         read_op.open(filepath);
         if (!read_op.good()) {
+            std::cout << "Cannot open file: " << NStringUtil::_w2s(filepath) << std::endl;
             return false;
         }
         else {
@@ -40,23 +41,21 @@ public:
             while (read_op.good()) {
                 std::string line;
                 std::getline(read_op, line);
-
                 if (line.size()) {
-                    std::stringstream s;
-                    std::string sval;
-                    s << line;
-                    s >> sval;
-                    const std::wstring wval(NStringUtil::_s2w(sval));
-
-                    DataType val;
-                    if (typeid(DataType) == typeid(double)) {
-                        val = _wtof(wval.c_str());
+                    std::vector<std::wstring> liststr;
+                    boost::algorithm::split(liststr, line, boost::is_any_of(","));
+                    for (size_t i = 0; i < liststr.size(); ++i) {
+                        const std::wstring wval = liststr[i];
+                        DataType val;
+                        if (typeid(DataType) == typeid(double)) {
+                            val = _wtof(wval.c_str());
+                        }
+                        else {
+                            val = (float)_wtof(wval.c_str());
+                        }
+                        m_series.push_back(std::make_pair((TimeType)(index), val));
+                        index++;
                     }
-                    else {
-                        val = (float) _wtof(wval.c_str());
-                    }
-                    m_series.push_back(std::make_pair((TimeType)index, val));
-                    index++;
                 }
                 else {
                     break;
@@ -66,7 +65,7 @@ public:
         read_op.close();
         return true;
     };
-    bool MakeFromSingleLine(const std::wstring& line, const bool &has_class) {
+    bool MakeFromSingleLine(const std::wstring& line) {
         std::vector<std::wstring> liststr;
         boost::algorithm::split(liststr, line, boost::is_any_of(","));
         for (size_t i = 0; i < liststr.size(); ++i) {
@@ -78,12 +77,7 @@ public:
             else {
                 val = (float)_wtof(wval.c_str());
             }
-            if (has_class && i == 0) {
-                // read class number from the first
-                m_class = (int)val;
-                continue;
-            }
-            m_series.push_back(std::make_pair((TimeType)(i-has_class), val));
+            m_series.push_back(std::make_pair((TimeType)(i), val));
         }
         return true;
     }
@@ -168,7 +162,7 @@ bool WriteDelayBarcodesToFile(std::vector<std::pair<size_t, RipsComputePrmPtr>> 
     }
     return true;
 }
-int main(int argc, TCHAR* argv[], TCHAR* envp[])
+int main(int argc, char** argv)
 {
     using namespace boost::program_options;
     namespace fs = boost::filesystem;
@@ -177,16 +171,16 @@ int main(int argc, TCHAR* argv[], TCHAR* envp[])
     options_description description("Timeseries");
     description.add_options()
         ("debug,x", value<bool>()->default_value(false), "Print Debug Information")
-        ("nthreads,n", value<int>()->default_value(-1), "Number of threads")
+        ("nprocs,p", value<int>()->default_value(-1), "Number of procesors to process")
         ("emd,e", value<size_t>()->default_value(3), "Embedded dimension")
         ("modulus,m", value<coefficient_t>()->default_value(2), "Compute homology with coefficients in the prime field Z/<p>Z")
         ("maxdim,d", value<index_t>()->default_value(0), "Compute persistent homology up to dimension <k>")
         ("threshold,th", value<value_t>()->default_value(std::numeric_limits<value_t>::max()), "Compute Rips complexes up to diameter <t>")
-        ("output_dir,o", value<std::string>()->default_value("Output"), "Output directory")
+        ("outdir,o", value<std::string>()->default_value("Output"), "Output directory")
         ("input,i", value<std::string>()->default_value("timeseries"), "Input time series file or folder")
         ("multi,s", value<bool>()->default_value(false), "Use multi files in one input file")
-        ("taumax,tm", value<size_t>()->default_value(0), "Compute with delay time upt to taumax")
-        ("numpoints,p", value<size_t>()->default_value(0), "Compute up to number of points")
+        ("taumax,tm", value<size_t>()->default_value(0), "Compute with delay time up to taumax")
+        ("numpoints,n", value<size_t>()->default_value(0), "Compute up to number of points")
         ("scale,S", value<size_t>()->default_value(1), "Scale sampling in time series")
         ("numskip,N", value<size_t>()->default_value(0), "Skip time series")
         ("help,H", "Help: Usage TimeSeriesRunner [options] filename")
@@ -203,11 +197,18 @@ int main(int argc, TCHAR* argv[], TCHAR* envp[])
     size_t emb_dim = vm["emd"].as<size_t>();
     if (emb_dim <= 1)
         return false;
+
+    auto nprocs = vm["nprocs"].as<int>();
+    if (nprocs <= 0) {
+        std::cout << "Number of procs (= " << nprocs << ") need to be specifed as a positive integer" << std::endl;
+        std::cout << description << std::endl;
+        return nRetCode;
+    }
     size_t taumax = vm["taumax"].as<size_t>();
     size_t numpoints = vm["numpoints"].as<size_t>();
     size_t scale = vm["scale"].as<size_t>();
-    if(scale <= 0)
-        return false;
+    if (scale <= 0) scale = 1;
+
     bool multi_in_one = vm["multi"].as<bool>();
     size_t numskip = vm["numskip"].as<size_t>();
 
@@ -219,7 +220,7 @@ int main(int argc, TCHAR* argv[], TCHAR* envp[])
         return false;
 
     auto maxdim = vm["maxdim"].as<index_t>();
-    auto out_dir = NStringUtil::_s2w(vm["output_dir"].as<std::string>());
+    auto out_dir = NStringUtil::_s2w(vm["outdir"].as<std::string>());
 
     rip_prm->modulus = vm["modulus"].as<coefficient_t>();
     if(false == NRipserUtils::isPrime(rip_prm->modulus))
@@ -273,7 +274,7 @@ int main(int argc, TCHAR* argv[], TCHAR* envp[])
         if (multi_in_one) {
             if (i >= rstr.size())
                 break;
-            ts->MakeFromSingleLine(rstr[i], false);
+            ts->MakeFromSingleLine(rstr[i]);
         }
         else {
             ts->ReadFromSingleCsvFile(p.c_str());
@@ -298,8 +299,7 @@ int main(int argc, TCHAR* argv[], TCHAR* envp[])
             delay_barcodes.push_back(std::make_pair(tau, prm_f));
         }
         if (!prm_vec.empty()) {
-            auto nthreads = vm["nthreads"].as<int>();
-            ComputeRipPHMultiFiles(nthreads, prm_vec);
+            ComputeRipPHMultiFiles(nprocs, prm_vec);
         }
         WriteDelayBarcodesToFile(delay_barcodes, out_dir, maxdim, basename);
     }

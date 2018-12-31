@@ -81,13 +81,20 @@ namespace NDiagramDistanceRunner {
     }
 
     MaxtrixFType KernelVecsProduct(TypeBarcodesPtrVec diagram_vecs, KernelPrm<FType>& prm) {
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
         size_t num_diagrams = diagram_vecs.size();
         MaxtrixFType gram_mat(num_diagrams, num_diagrams);
 
         for (size_t i = 0; i < num_diagrams; ++i) {
+            auto total = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - begin).count();
+            auto hours = total / 3600;
+            auto mins = (total - hours * 3600) / 60;
+            auto secs = total - hours * 3600 - mins * 60;
+            std::cout << "Ellapsed time (h:m:s)= " << hours << ":" << mins << ":" << secs << 
+                ", Index of diagram: " << i << " per total of " << num_diagrams << std::endl;
             // multi-threads
             concurrency::parallel_for(i, num_diagrams, [&](size_t j) {
-                //NZioSysUtil::CZPerfCounter pc;
                 FType result(0);
                 KernelProduct(result, diagram_vecs[i], diagram_vecs[j], prm);
                 gram_mat(i, j) = result;
@@ -104,6 +111,7 @@ namespace NDiagramDistanceRunner {
     }
 
     MaxtrixFType KernelVecsProduct(TypeBarcodesPtrVec dvecs1, TypeBarcodesPtrVec dvecs2, KernelPrm<FType>& prm) {
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         size_t nums1 = dvecs1.size();
         size_t nums2 = dvecs2.size();
         if (nums1 == 0) return KernelVecsProduct(dvecs2, prm);
@@ -112,9 +120,14 @@ namespace NDiagramDistanceRunner {
         MaxtrixFType gram_mat(nums1, nums2);
 
         for (size_t i = 0; i < nums1; ++i) {
+            auto total = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - begin).count();
+            auto hours = total / 3600;
+            auto mins = (total - hours * 3600) / 60;
+            auto secs = total - hours * 3600 - mins * 60;
+            std::cout << "Ellapsed time (h:m:s)= " << hours << ":" << mins << ":" << secs <<
+                ", Index of diagram: " << i << " per total of " << nums1 << std::endl;
             // multi-threads
             concurrency::parallel_for((size_t)0, nums2, [&](size_t j) {
-                //NZioSysUtil::CZPerfCounter pc;
                 FType result(0);
                 KernelProduct(result, dvecs1[i], dvecs2[j], prm);
                 gram_mat(i, j) = result;
@@ -176,6 +189,7 @@ namespace NDiagramDistanceRunner {
 
     bool MakeGramMatAndSaveResultToFile(TypeBarcodesPtrVec dvecs1, TypeBarcodesPtrVec dvecs2,
         std::wstring& output_path, KernelPrm<FType>& prm) {
+        std::cout << "Computing gram matrix and save to file: " << NStringUtil::_w2s(output_path) << std::endl;
         namespace fs = boost::filesystem;
         fs::path opath(output_path);
         if (prm.kertype == KernelType::L2_INNER_MULTI_SCALE_NOSSE ||
@@ -184,6 +198,7 @@ namespace NDiagramDistanceRunner {
             prm.kertype == KernelType::RIEMANNIAN_METRIC) {
             if (prm.time_hole == 0.0) FindOptimalTimeHole(dvecs1, dvecs2, prm.time_hole);
             if (prm.time_tau == 0.0) FindOptimalTimeTau(dvecs1, dvecs2, prm.time_tau);
+            std::cout << "Optimal timehole = " << prm.time_hole << ", timetau = " << prm.time_tau << std::endl;
         }
 
         MaxtrixFType gram_mat = KernelVecsProduct(dvecs1, dvecs2, prm);
@@ -230,7 +245,9 @@ namespace NDiagramDistanceRunner {
         const boost::tuple<int, FType, bool, FType> rprms /*hole parameter dim, valInfty, skipInfty*/,
         const boost::tuple<FType, FType, bool> kpm) {
         std::vector<CPersistenceBarcodesPtr> dvecs1, dvecs2;
+        std::cout << "Making barcodes for left path" << std::endl;
         MakeDiagramVec(dvecs1, barcodes_lpath, rprms, kpm);
+        std::cout << "Making barcodes for right path" << std::endl;
         MakeDiagramVec(dvecs2, barcodes_rpath, rprms, kpm);
         if(dvecs1.empty() == true && dvecs2.empty() == true)
             return false;
@@ -251,6 +268,7 @@ namespace NDiagramDistanceRunner {
         std::ostream out(&buf);
         for (auto &gamma : gammas) {
             auto kfdrs = ComputeKFDRs((int)gram_mat.rows(), gram_mat, gamma);
+            out << gamma << ' ';
             for (auto val : kfdrs) {
                 out << val << ' ';
             }
@@ -373,38 +391,37 @@ int main(int argc, char** argv)
         ("timehole", value<double>()->default_value(0.0))
         ("timetau", value<double>()->default_value(1.0))
         ("kerls", value<std::string>()->default_value(""), "Input as list of kernel for kfdr")
-        ("leftin,l", value<std::string>()->default_value(""), "(left) Input as List of barcodes")
-        ("rightin,r", value<std::string>()->default_value(""), "(right) Input as List of barcodes")
-        ("dim", value<unsigned>()->default_value(0))
+        ("left,l", value<std::string>()->default_value(""), "(left) Input as List of barcodes")
+        ("right,r", value<std::string>()->default_value(""), "(right) Input as List of barcodes")
+        ("dim,d", value<unsigned>()->default_value(0))
         ("skipinf", value<bool>()->default_value(true))
         ("infval", value<double>()->default_value(1.0))
         ("nbegin", value<unsigned>()->default_value(0))
         ("nend", value<unsigned>()->default_value(0))
         ("gamma", value<double>()->default_value(0.0))
         ("threshold", value<double>()->default_value(0.0))
-        ("output", value<std::string>()->default_value("grammat.txt"), "Output file of gram matrix")
+        ("output,o", value<std::string>()->default_value("grammat.txt"), "Output file of gram matrix")
         ("kfdrout", value<std::string>()->default_value("kfdr"), "Output folder for kfdr")
         ("posfix", value<std::string>()->default_value(""), "postfix for output file")
         ("method", value<int>()->default_value(0),
             "0: L2_inner_multi_sse, 1: L2_squared_distance, 2: Slice Wasserstein, 3:L2_inner_multi_nosse, 4:riemmannian_metric")
-            ("theta_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for theta")
+        ("theta_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for theta")
         ("phi_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for gamma")
         ("alltau", value<bool>()->default_value(true), "true: all tau, false: optimal tau")
         ("opttau", value<double>()->default_value(0.0), "specify for optimal tau for single case")
         ("taumax", value<double>()->default_value(0.0), "maximum of tau when calculating kernel, taumax = 0 means that taking all possible tau")
-        ("kfdr", value<int>()->default_value(0))
+        ("kfdr", value<bool>()->default_value(false), "option to calculate kfdr, 1: kfdr, 0:kernel")
         ("help,H", "Help: Diagram Distance to compute kernel of diagrams")
         ("version,v", "v1.0")
         ;
-
     variables_map vm;
     store(parse_command_line(argc, argv, description), vm);
     notify(vm);
-
     if (vm.count("help")) {
         std::cout << description << std::endl;
         return nRetCode;
     }
+    
     auto T_hole = static_cast<FType>(vm["timehole"].as<double>());
     auto T_tau = static_cast<FType>(vm["timetau"].as<double>());
 
@@ -420,8 +437,8 @@ int main(int argc, char** argv)
     auto gamma = static_cast<FType>(vm["gamma"].as<double>());
 
     auto kernel_list_path = NStringUtil::_s2w(vm["kerls"].as<std::string>());
-    auto left_path = NStringUtil::_s2w(vm["leftin"].as<std::string>());
-    auto right_path = NStringUtil::_s2w(vm["rightin"].as<std::string>());
+    auto left_path = NStringUtil::_s2w(vm["left"].as<std::string>());
+    auto right_path = NStringUtil::_s2w(vm["right"].as<std::string>());
 
     auto output_kfdr = NStringUtil::_s2w(vm["kfdrout"].as<std::string>());
     auto output_path = NStringUtil::_s2w(vm["output"].as<std::string>());
@@ -449,9 +466,11 @@ int main(int argc, char** argv)
         kertype = KernelType::RIEMANNIAN_METRIC;
         break;
     default:
+        std::cout << "Kernel method is not defined!" << std::endl;
+        std::cout << description;
         return nRetCode;
     }
-
+    
     KernelPrm<FType> prm;
     prm.kertype = kertype;
     prm.time_hole = T_hole;
@@ -465,8 +484,8 @@ int main(int argc, char** argv)
         L"_phi_ndirs_" + std::to_wstring(phi_ndirs) + 
         L"_gamma_" + std::to_wstring(gamma);
 
-    auto kfdr = vm["kfdr"].as<int>();
-    if (kfdr > 0) {
+    auto kfdr = vm["kfdr"].as<bool>();
+    if (kfdr == TRUE) {
         std::vector<double> gammas = {
             1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 7e-6, 8e-6, 9e-6,
             1e-5, 2e-5, 3e-5, 4e-5, 5e-5, 6e-5, 7e-5, 8e-5, 9e-5,
@@ -490,6 +509,12 @@ int main(int argc, char** argv)
         }
     }
     else {
+        if (left_path != L"" && !boost::filesystem::exists(left_path)) {
+            std::cout << "Not found left path for calculating kernel: " << NStringUtil::_w2s(left_path) << std::endl;
+        }
+        if (right_path != L"" && !boost::filesystem::exists(right_path)) {
+            std::cout << "Not found left path for calculating kernel: " << NStringUtil::_w2s(right_path) << std::endl;
+        }
         SaveKernelResultFromBarcodeListFile(left_path, right_path, output_path, prm,
             boost::make_tuple(dim, infval, skip, threshold), boost::make_tuple(opt_tau, tau_max, all_tau));
     }
