@@ -88,7 +88,7 @@ Calculate kernel for 3-dimensional persistence diagrams.
                      if opttau <= 0 -> calculate single-delay kernel with tau specified in barcode list file
         --help     : print usage option
 
-Example of list of barcodes for input:
+Example of list of barcodes for input (see more at timeseries/ECGFiveDays/run-compute-kernel.bat):
 
     ph(m=5,s=1)/delay_barcode_ECGFiveDays_time_series_0_dim_1.txt;tau=8
     ph(m=5,s=1)/delay_barcode_ECGFiveDays_time_series_1_dim_1.txt;tau=9
