@@ -31,11 +31,11 @@ Calculate persistence diagrams from point clouds.
         --multi    : compute single input file (0) or multi files in one input file  (1) 
         --help     : print usage option
 
-    Example: (see more at ph-compute\DelayVariantTopo\run-compute-persistent.bat)
+Example: (see more at ```ph-compute\DelayVariantTopo\run-compute-persistent.bat```)
 
-        Release\PersistentRunner_D64.exe --nthreads 16 --maxdim 1 --format point-cloud --outdir output --input data\pcl_1.txt --multi 0
+    Release\PersistentRunner_D64.exe --nthreads 16 --maxdim 1 --format point-cloud --outdir output --input data\pcl_1.txt --multi 0
 
-        Release\PersistentRunner_D64.exe --nthreads -1 --maxdim 1 --format point-cloud --outdir output --input data\pcl_list.txt --multi 1
+    Release\PersistentRunner_D64.exe --nthreads -1 --maxdim 1 --format point-cloud --outdir output --input data\pcl_list.txt --multi 1
 
 ### Release/TimeSeriesRunner_D64.exe
 Calculate 3-dimensional persistence diagrams for time-series data via delay-variant embedding.
@@ -61,7 +61,7 @@ Example of time-series data for input (csv format):
     -0.013602,-0.060633,-0.013602,-0.07631,-0.060633,-0.12334,-0.084149,-0.068472,-0.037118,-0.07631
     -0.060633,-0.12334,-0.060633,-0.091987,-0.068472,-0.10766,-0.099826,-0.14686,-0.029279,0.0099134
     
-For multi mode (multi=1), the programm will process one line as one time series (see more at timeseries/ECGFiveDays/run-compute-delay-PH.bat).
+For multi mode (multi=1), the programm will process one line as one time series (see more at ```timeseries/ECGFiveDays/run-compute-delay-PH.bat```).
 
 ### Release/DiagramDistanceRunner_D64.exe
 Calculate kernel for 3-dimensional persistence diagrams.
@@ -88,7 +88,7 @@ Calculate kernel for 3-dimensional persistence diagrams.
                      if opttau <= 0 -> calculate single-delay kernel with tau specified in barcode list file
         --help     : print usage option
 
-Example of list of barcodes for input (see more at timeseries/ECGFiveDays/run-compute-kernel.bat):
+Example of list of barcodes for input (see more at ```timeseries/ECGFiveDays/run-compute-kernel.bat```):
 
     ph(m=5,s=1)/delay_barcode_ECGFiveDays_time_series_0_dim_1.txt;tau=8
     ph(m=5,s=1)/delay_barcode_ECGFiveDays_time_series_1_dim_1.txt;tau=9

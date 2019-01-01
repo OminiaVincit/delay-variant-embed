@@ -402,7 +402,7 @@ int main(int argc, char** argv)
         ("method", value<int>()->default_value(0),
             "0: L2_inner_multi_sse, 1: L2_squared_distance, 2: Slice Wasserstein, 3:L2_inner_multi_nosse, 4:riemmannian_metric")
         ("theta_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for theta")
-        ("phi_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for gamma")
+        ("phi_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for phi")
         ("alltau", value<bool>()->default_value(true), "True: all tau, False: optimal tau")
         ("opttau", value<double>()->default_value(0.0), "Specify for optimal tau for single case")
         ("taumax", value<double>()->default_value(0.0), 
