@@ -413,14 +413,13 @@ namespace NRipserComputeUtils {
         return true;
     }
 
-    bool ComputeRipPHMultiFiles(int nprocs, std::vector<RipsComputePrmPtr> prm_vec) {
+    bool ComputeRipPHMultiFiles(int nthreads, std::vector<RipsComputePrmPtr> prm_vec) {
         int num_files = static_cast<int>(prm_vec.size());
-        if (nprocs <= 0) {
-            // should get all processors
-            return false;
+        if (nthreads <= 0) {
+            nthreads = std::thread::hardware_concurrency();
         }
-        const int n_slice = (num_files + nprocs - 1) / nprocs;
-        concurrency::parallel_for(0, nprocs, [&](int proc) {
+        const int n_slice = (num_files + nthreads - 1) / nthreads;
+        concurrency::parallel_for(0, nthreads, [&](int proc) {
             const int zbg = n_slice * proc;
             const int zed = std::min(num_files, zbg + n_slice);
 			for (int i = zbg; i < zed; ++i) {

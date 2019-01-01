@@ -15,6 +15,9 @@
 #include "../RipserLib_D64/RipserComputeUtils.h"
 #include "../RipserLib_D64/RipserInOutUtils.h"
 
+#include <ppl.h>
+#include <ppltasks.h>
+
 using namespace NRipserComputeUtils;
 using namespace NRipserInOutUtils;
 
@@ -25,12 +28,13 @@ int main(int argc, char** argv) {
     options_description description("PersistentRunner");
     description.add_options()
         ("debug,x", value<bool>()->default_value(false), "Print Debug Information")
-        ("nprocs,n", value<int>()->default_value(-1), "Number of processors to process")
+        ("nthreads,n", value<int>()->default_value(-1), "Number of threads to use, -1: use all as possible")
         ("modulus,m", value<coefficient_t>()->default_value(2), "Compute homology with coefficients in the prime field Z/<p>Z")
         ("maxdim,d", value<index_t>()->default_value(0), "Compute persistent homology up to dimension <k>")
         ("threshold,th", value<value_t>()->default_value(std::numeric_limits<value_t>::max()), "Compute Rips complexes up to diameter <t>")
-        ("format,f", value<std::string>()->default_value("point-cloud"), "Use the specified file format for the input. Options are point-cloud, lower-distance, upper-distance, distance, dipha")
-        ("output_dir,o", value<std::string>()->default_value("output"), "Output directory")
+        ("format,f", value<std::string>()->default_value("point-cloud"), 
+            "Use the specified file format for the input. Options are point-cloud, lower-distance, upper-distance, distance, dipha")
+        ("outdir,o", value<std::string>()->default_value("output"), "Output directory")
         ("input,i", value<std::string>()->default_value("pointcloud"), "Input file")
         ("multi,s", value<bool>()->default_value(false), "Use multi files in one input file")
         ("help,H", "Help: Usage PersistentRunner_D64 [options]")
@@ -44,12 +48,11 @@ int main(int argc, char** argv) {
         std::cout << description << std::endl;
         return nRetCode;
     }
-    auto nprocs = vm["nprocs"].as<int>();
-    if (nprocs <= 0) {
-        std::cout << "Number of procs (= " << nprocs << ") need to be specifed as a positive integer" << std::endl;
-        std::cout << description << std::endl;
-        return nRetCode;
+    auto nthreads = vm["nthreads"].as<int>();
+    if (nthreads <= 0) {
+        nthreads = std::thread::hardware_concurrency();
     }
+    std::cout << "Number of threads (= " << nthreads << ")" << std::endl;
 
     RipsComputePrmPtr prm(new RipsComputePrm());
     RipsPrmPtr rip_prm = prm->rip_prm;
@@ -69,7 +72,7 @@ int main(int argc, char** argv) {
     rip_prm->dim_max     = vm["maxdim"].as<index_t>();
     rip_prm->threshold   = vm["threshold"].as<value_t>();
 
-    output_prm->out_dir      = NStringUtil::_s2w(vm["output_dir"].as<std::string>());
+    output_prm->out_dir      = NStringUtil::_s2w(vm["outdir"].as<std::string>());
     std::string file_format  = vm["format"].as<std::string>();
 
     NRipserComputeUtils::FILEFORMAT format = NRipserComputeUtils::FILEFORMAT::POINT_CLOUD;
@@ -110,7 +113,7 @@ int main(int argc, char** argv) {
         }
         if (!prm_vec.empty()) {
             std::cout << "Number of files to compute:  " << prm_vec.size() << std::endl;
-            ComputeRipPHMultiFiles(nprocs, prm_vec);
+            ComputeRipPHMultiFiles(nthreads, prm_vec);
         }
         else {
             std::cout << "Nothing to compute. Please check the input." << std::endl;
