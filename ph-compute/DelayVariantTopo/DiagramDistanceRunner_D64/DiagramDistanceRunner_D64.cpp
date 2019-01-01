@@ -388,29 +388,30 @@ int main(int argc, char** argv)
 
     options_description description("DiagramDistance");
     description.add_options()
-        ("timehole", value<double>()->default_value(0.0))
-        ("timetau", value<double>()->default_value(1.0))
-        ("kerls", value<std::string>()->default_value(""), "Input as list of kernel for kfdr")
+        ("timehole", value<double>()->default_value(0.0), "Parameter sigmal in the kernel (=0 for optimal value)")
+        ("timetau", value<double>()->default_value(1.0),  "Ratio of xi vs. sigmal in the kernel")
         ("left,l", value<std::string>()->default_value(""), "(left) Input as List of barcodes")
         ("right,r", value<std::string>()->default_value(""), "(right) Input as List of barcodes")
-        ("dim,d", value<unsigned>()->default_value(0))
-        ("skipinf", value<bool>()->default_value(true))
-        ("infval", value<double>()->default_value(1.0))
-        ("nbegin", value<unsigned>()->default_value(0))
-        ("nend", value<unsigned>()->default_value(0))
-        ("gamma", value<double>()->default_value(0.0))
-        ("threshold", value<double>()->default_value(0.0))
+        ("dim,d", value<unsigned>()->default_value(0), "Dimension of holes to compute kernel")
+        ("skipinf", value<bool>()->default_value(true), "Skip holes which have infinity death-scale")
+        ("infval", value<double>()->default_value(1.0), 
+            "If not skip holes which have infinity death-scale, replace these death-scales with a default value")
+        ("thres", value<double>()->default_value(0.0), "Threshold to skip holes with death-birth < thres (default=0 to use all holes)")
         ("output,o", value<std::string>()->default_value("grammat.txt"), "Output file of gram matrix")
-        ("kfdrout", value<std::string>()->default_value("kfdr"), "Output folder for kfdr")
         ("posfix", value<std::string>()->default_value(""), "postfix for output file")
         ("method", value<int>()->default_value(0),
             "0: L2_inner_multi_sse, 1: L2_squared_distance, 2: Slice Wasserstein, 3:L2_inner_multi_nosse, 4:riemmannian_metric")
         ("theta_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for theta")
         ("phi_ndirs", value<int>()->default_value(1), "Number of direction in wasserstein slice distance for gamma")
-        ("alltau", value<bool>()->default_value(true), "true: all tau, false: optimal tau")
-        ("opttau", value<double>()->default_value(0.0), "specify for optimal tau for single case")
-        ("taumax", value<double>()->default_value(0.0), "maximum of tau when calculating kernel, taumax = 0 means that taking all possible tau")
+        ("alltau", value<bool>()->default_value(true), "True: all tau, False: optimal tau")
+        ("opttau", value<double>()->default_value(0.0), "Specify for optimal tau for single case")
+        ("taumax", value<double>()->default_value(0.0), 
+            "Maximum of tau when calculating kernel, taumax = 0 means that taking all possible tau")
         ("kfdr", value<bool>()->default_value(false), "option to calculate kfdr, 1: kfdr, 0:kernel")
+        ("kfdrout", value<std::string>()->default_value("kfdr"), "Output folder for kfdr")
+        ("nbegin", value<unsigned>()->default_value(0))
+        ("nend", value<unsigned>()->default_value(0))
+        ("kerls", value<std::string>()->default_value(""), "Input as list of kernel for kfdr")
         ("help,H", "Help: Diagram Distance to compute kernel of diagrams")
         ("version,v", "v1.0")
         ;
@@ -432,9 +433,8 @@ int main(int argc, char** argv)
     auto opt_tau = vm["opttau"].as<double>();
     auto skip = vm["skipinf"].as<bool>();
     auto infval = static_cast<FType>(vm["infval"].as<double>());
-    auto threshold = static_cast<FType>(vm["threshold"].as<double>());
+    auto threshold = static_cast<FType>(vm["thres"].as<double>());
     auto tau_max = static_cast<FType>(vm["taumax"].as<double>());
-    auto gamma = static_cast<FType>(vm["gamma"].as<double>());
 
     auto kernel_list_path = NStringUtil::_s2w(vm["kerls"].as<std::string>());
     auto left_path = NStringUtil::_s2w(vm["left"].as<std::string>());
@@ -477,12 +477,10 @@ int main(int argc, char** argv)
     prm.time_tau = T_tau;
     prm.theta_ndirs = theta_ndirs;
     prm.phi_ndirs = phi_ndirs;
-    prm.gamma = gamma;
     prm.postfix = posfix + L"_timehole_" + std::to_wstring(T_hole) + 
         L"_timetau_" + std::to_wstring(T_tau) +
         L"_theta_ndirs_" + std::to_wstring(theta_ndirs) + 
-        L"_phi_ndirs_" + std::to_wstring(phi_ndirs) + 
-        L"_gamma_" + std::to_wstring(gamma);
+        L"_phi_ndirs_" + std::to_wstring(phi_ndirs);
 
     auto kfdr = vm["kfdr"].as<bool>();
     if (kfdr == TRUE) {

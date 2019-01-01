@@ -14,6 +14,8 @@
 #include "boost/program_options.hpp"
 #include <fstream>
 
+#include <ppl.h>
+#include <ppltasks.h>
 
 using namespace NRipserComputeUtils;
 
@@ -168,21 +170,21 @@ int main(int argc, char** argv)
     namespace fs = boost::filesystem;
 
     int nRetCode = 0;
-    options_description description("Timeseries");
+    options_description description("TimeSeriesPersistenceRunner");
     description.add_options()
         ("debug,x", value<bool>()->default_value(false), "Print Debug Information")
-        ("nprocs,p", value<int>()->default_value(-1), "Number of procesors to process")
-        ("emd,e", value<size_t>()->default_value(3), "Embedded dimension")
+        ("nthreads,n", value<int>()->default_value(-1), "Number of threads to use, -1: use all as possible")
+        ("emd,e", value<size_t>()->default_value(3), "Embedded dimension for delay-variant embedding")
         ("modulus,m", value<coefficient_t>()->default_value(2), "Compute homology with coefficients in the prime field Z/<p>Z")
         ("maxdim,d", value<index_t>()->default_value(0), "Compute persistent homology up to dimension <k>")
-        ("threshold,th", value<value_t>()->default_value(std::numeric_limits<value_t>::max()), "Compute Rips complexes up to diameter <t>")
+        ("thres,th", value<value_t>()->default_value(std::numeric_limits<value_t>::max()), "Compute Rips complexes up to diameter <t>")
         ("outdir,o", value<std::string>()->default_value("Output"), "Output directory")
         ("input,i", value<std::string>()->default_value("timeseries"), "Input time series file or folder")
         ("multi,s", value<bool>()->default_value(false), "Use multi files in one input file")
         ("taumax,tm", value<size_t>()->default_value(0), "Compute with delay time up to taumax")
-        ("numpoints,n", value<size_t>()->default_value(0), "Compute up to number of points")
+        ("npoints,n", value<size_t>()->default_value(0), "Compute up to number of points")
         ("scale,S", value<size_t>()->default_value(1), "Scale sampling in time series")
-        ("numskip,N", value<size_t>()->default_value(0), "Skip time series")
+        ("nskip,N", value<size_t>()->default_value(0), "Skip time series")
         ("help,H", "Help: Usage TimeSeriesRunner [options] filename")
         ("version,v", "v1.0")
         ;
@@ -198,19 +200,19 @@ int main(int argc, char** argv)
     if (emb_dim <= 1)
         return false;
 
-    auto nprocs = vm["nprocs"].as<int>();
-    if (nprocs <= 0) {
-        std::cout << "Number of procs (= " << nprocs << ") need to be specifed as a positive integer" << std::endl;
-        std::cout << description << std::endl;
-        return nRetCode;
+    auto nthreads = vm["nthreads"].as<int>();
+    if (nthreads <= 0) {
+        nthreads = std::thread::hardware_concurrency();
     }
+    std::cout << "Number of threads (= " << nthreads << ")" << std::endl;
+
     size_t taumax = vm["taumax"].as<size_t>();
-    size_t numpoints = vm["numpoints"].as<size_t>();
+    size_t numpoints = vm["npoints"].as<size_t>();
     size_t scale = vm["scale"].as<size_t>();
     if (scale <= 0) scale = 1;
 
     bool multi_in_one = vm["multi"].as<bool>();
-    size_t numskip = vm["numskip"].as<size_t>();
+    size_t numskip = vm["nskip"].as<size_t>();
 
     RipsComputePrmPtr prm(new RipsComputePrm());
     RipsPrmPtr rip_prm = prm->rip_prm;
@@ -226,7 +228,7 @@ int main(int argc, char** argv)
     if(false == NRipserUtils::isPrime(rip_prm->modulus))
         return false;
     rip_prm->dim_max = maxdim;
-    rip_prm->threshold = vm["threshold"].as<value_t>();
+    rip_prm->threshold = vm["thres"].as<value_t>();
 
     output_prm->write_mode = INOUT_MODE::INNER_MODE;
     output_prm->out_dir = out_dir;
@@ -299,7 +301,7 @@ int main(int argc, char** argv)
             delay_barcodes.push_back(std::make_pair(tau, prm_f));
         }
         if (!prm_vec.empty()) {
-            ComputeRipPHMultiFiles(nprocs, prm_vec);
+            ComputeRipPHMultiFiles(nthreads, prm_vec);
         }
         WriteDelayBarcodesToFile(delay_barcodes, out_dir, maxdim, basename);
     }

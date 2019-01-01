@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
         ("nthreads,n", value<int>()->default_value(-1), "Number of threads to use, -1: use all as possible")
         ("modulus,m", value<coefficient_t>()->default_value(2), "Compute homology with coefficients in the prime field Z/<p>Z")
         ("maxdim,d", value<index_t>()->default_value(0), "Compute persistent homology up to dimension <k>")
-        ("threshold,th", value<value_t>()->default_value(std::numeric_limits<value_t>::max()), "Compute Rips complexes up to diameter <t>")
+        ("thres,th", value<value_t>()->default_value(std::numeric_limits<value_t>::max()), "Compute Rips complexes up to diameter <t>")
         ("format,f", value<std::string>()->default_value("point-cloud"), 
             "Use the specified file format for the input. Options are point-cloud, lower-distance, upper-distance, distance, dipha")
         ("outdir,o", value<std::string>()->default_value("output"), "Output directory")
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     }
 
     rip_prm->dim_max     = vm["maxdim"].as<index_t>();
-    rip_prm->threshold   = vm["threshold"].as<value_t>();
+    rip_prm->threshold   = vm["thres"].as<value_t>();
 
     output_prm->out_dir      = NStringUtil::_s2w(vm["outdir"].as<std::string>());
     std::string file_format  = vm["format"].as<std::string>();
