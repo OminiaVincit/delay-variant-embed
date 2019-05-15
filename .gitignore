@@ -79,3 +79,4 @@ ipch/
 *.map
 *.lib
 *.bak
+ph-compute/DelayVariantTopo/.vs
