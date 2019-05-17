@@ -37,6 +37,11 @@ Example: (see more at ```ph-compute\DelayVariantTopo\run-compute-persistent.bat`
 
     Release\PersistentRunner_D64.exe --nthreads -1 --maxdim 1 --format point-cloud --outdir output --input data\pcl_list.txt --multi 1
 
+Notice that the core C++ code for this module is derived from Ripser, which is also available under an MIT license and copyright to Ulrich Baeur.
+
+    Bauer, Ulrich. "Ripser: a lean C++ code for the computation of Vietoris–Rips persistence barcodes." 
+    Software available at https ://github. com/Ripser/ripser (2017).
+
 ### Release/TimeSeriesRunner_D64.exe
 Calculate 3-dimensional persistence diagrams for time-series data via delay-variant embedding.
 
