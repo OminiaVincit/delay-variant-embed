@@ -1,3 +1,11 @@
+﻿//******************************************************************************************************************
+//     The core C++ code is derived from Ripser, 
+//     which is also available under an MIT license and copyright to Ulrich Baeur.
+//        Bauer, Ulrich. "Ripser: a lean C++ code for the computation of Vietoris–Rips persistence barcodes." 
+//        Software available at https ://github. com/Ripser/ripser (2017).
+//
+//******************************************************************************************************************
+
 #pragma once
 #include "../PersistenceUtils_D64/PersistenceDeclarations.h"
 #include "../PersistenceUtils_D64/PersistenceUtils_D64.h"
